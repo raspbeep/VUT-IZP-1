@@ -25,6 +25,7 @@ int verify_unsigned_integer(const char string[]);
 void irow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 int is_delim (const char *delim, char *delim_string[], const bool *multi_character_delim, int znak);
 void arow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
+void drow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 
 int main(int argc, char *argv[]){
     // neboli zadane ziadne args ani delim
@@ -82,6 +83,10 @@ int main(int argc, char *argv[]){
                         arow(file_in, file_out, param1, &delim, delim_string, multi_character_delim);
                         break;
 
+                    case DROW:
+                        drow(file_in, file_out, param1, &delim, delim_string, multi_character_delim);
+                        break;
+
                     case NONE:
                         printf("[ERROR] Neboli najdene ziadne argumenty na upravu tabulky.\n");
                         break;
@@ -119,6 +124,7 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
 
                 }else if (!strcmp(argv[i], "drow")){
                     printf("nasiel som drow\n");
+                    *args_mode = DROW;
                     *param_mode = AWAIT_DROW_PARAM;
 
                 }else if (!strcmp(argv[i], "drows")){
@@ -164,7 +170,7 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
             case AWAIT_DROW_PARAM:
                 if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
                     break;
-                }else if ((*param1 = (int)*argv[i]), param1 != 0){
+                }else if ((*param1 = (int)strtol(argv[i], NULL, 10)), param1 != 0){
 
                     *args_mode = DROW;
                     *param_mode = HAVE_ALL_PARAMS;
@@ -277,6 +283,25 @@ int verify_unsigned_integer(const char string[]){
 
 }
 
+int is_delim (const char *delim, char *delim_string[], const bool *multi_character_delim, int znak) {
+    // porovna ci sa znak nachadza v retazci delim
+    // ak je znak delim, vrati 1, inak 0
+
+    if (*multi_character_delim) {
+        if ( strchr(*delim_string, (char)znak) != NULL )
+        {
+            return 1;
+        }
+
+        return 0;
+    }else{
+        if(*delim == znak){
+            return 1;
+        }
+        return 0;
+    }
+}
+
 void irow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string){
     int znak;
     int riadky_counter = 0;
@@ -287,11 +312,11 @@ void irow(FILE *file_in, FILE *file_out, int param, const char *delim, char deli
 
         if (is_delim(delim, &delim_string, &multi_character_string, znak)){
             if(!printed_delim) {
-                fputc(*delim, stdout);
+                fputc(*delim, file_out);
                 printed_delim = true;
             }
         }else {
-            fputc(znak, stdout);
+            fputc(znak, file_out);
             printed_delim = false;
         }
 
@@ -319,25 +344,6 @@ void irow(FILE *file_in, FILE *file_out, int param, const char *delim, char deli
         znak = fgetc(file_in);
     }
 
-}
-
-int is_delim (const char *delim, char *delim_string[], const bool *multi_character_delim, int znak) {
-    // porovna ci sa znak nachadza v retazci delim
-    // ak je znak delim, vrati 1, inak 0
-
-    if (*multi_character_delim) {
-        if ( strchr(*delim_string, (char)znak) != NULL )
-        {
-         return 1;
-        }
-
-        return 0;
-    }else{
-        if(*delim == znak){
-            return 1;
-        }
-        return 0;
-    }
 }
 
 void arow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string){
@@ -378,5 +384,45 @@ void arow(FILE *file_in, FILE *file_out, int param, const char *delim, char deli
         }
         printed_empty_column = false;
 
+    }
+}
+
+void drow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string) {
+    int riadky_counter = 0;
+    int znak;
+    znak = fgetc(file_in);
+    bool printed_delim = false;
+
+    while (znak != EOF){
+        if (riadky_counter == param) {
+            if (znak == '\n'){
+                riadky_counter++;
+                znak = fgetc(file_in);
+
+            }else {
+                znak = fgetc(file_in);
+            }
+
+        }else{
+            if (znak == '\n'){
+                riadky_counter++;
+                fputc(znak, file_out);
+                znak = fgetc(file_in);
+            }else{
+                if (is_delim(delim, &delim_string, &multi_character_string, znak)) {
+                    if (!printed_delim) {
+                        fputc(*delim, file_out);
+                        printed_delim = true;
+                        znak = fgetc(file_in);
+                    }else{
+                        znak = fgetc(file_in);
+                    }
+                }else{
+                    printed_delim = false;
+                    fputc(znak, file_out);
+                    znak = fgetc(file_in);
+                }
+            }
+        }
     }
 }
