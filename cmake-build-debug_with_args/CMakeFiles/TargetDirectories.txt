@@ -1,0 +1,3 @@
+/home/pavel/Desktop/IZP/demo strcmp/cmake-build-debug_with_args/CMakeFiles/rebuild_cache.dir
+/home/pavel/Desktop/IZP/demo strcmp/cmake-build-debug_with_args/CMakeFiles/edit_cache.dir
+/home/pavel/Desktop/IZP/demo strcmp/cmake-build-debug_with_args/CMakeFiles/demo_strcmp.dir

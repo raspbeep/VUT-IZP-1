@@ -1,0 +1,1 @@
+/usr/bin/cc -g   CMakeFiles/demo_strcmp.dir/main.c.o  -o demo_strcmp 

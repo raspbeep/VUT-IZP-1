@@ -1,0 +1,12 @@
+[NOTICE] Nasiel sa viacznakovy delim: :[]
+nasiel som arow
+param1: 2
+param2: 0
+aaa:bbb::ccc
+aaa:bbb::ccc
+aaa:bbb::ccc
+aaa:bbb::ccc
+aaa:bbb::ccc
+aaa:bbb::ccc
+aaa:bbb::ccc
+aaa:bbb::ccc
