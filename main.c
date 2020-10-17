@@ -537,50 +537,38 @@ void dcol(FILE *file_in, FILE *file_out, int param, const char *delim, char deli
 
     int znak = fgetc(file_in);
     int stlpce_counter = 1;
-    bool printed_delim = false;
     bool pass = false;
 
     while (znak != EOF) {
         while (znak != '\n' && znak != EOF) {
 
-            if (is_delim(delim, &delim_string, &multi_character_string, znak)) {
-                if (!printed_delim) {
-                    fputc(*delim, stdout);
-                    printed_delim = true;
-                    znak = fgetc(file_in);
-                    stlpce_counter++;
-                    if (stlpce_counter == param) {
-                        pass = true;
-                    } else {
-                        pass = false;
-                    }
+            if (is_delim(delim, &delim_string, &multi_character_string, znak)){
+                //fputc(*delim, file_out);
+                if (!pass) fputc(*delim, file_out);
+                stlpce_counter++;
 
+                if (stlpce_counter == param) {
+                    pass = true;
                 } else {
-                    // tu by sa teoreticky malo tiez priratat do stlpce_counter
-                    // problem je ten, ze nevie rozoznat ci je to uz dalsi stlpec
-                    // alebo len dvojity delim :(
-                    znak = fgetc(file_in);
+                    pass = false;
                 }
 
-            } else {
-                if (!pass){
-                    fputc(znak, stdout);
-                    printed_delim = false;
-                    znak = fgetc(file_in);
-                }
+            }else {
+                //printf("*");
+                if (!pass) fputc(znak, file_out);
 
             }
+            znak = fgetc(file_in);
 
         }
 
 
         if (znak == '\n') {
             pass = false;
-            printed_delim = true;
+            stlpce_counter = 1;
             fputc('\n', file_out);
             znak = fgetc(file_in);
         }
     }
-    fputc(*delim, file_out);
-
+    fputc('\n', file_out);
 }

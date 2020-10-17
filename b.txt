@@ -1,16 +1,13 @@
 [NOTICE] Nasiel sa viacznakovy delim: :[]
-[NOTICE] Nasiel som acol.
-[NOTICE] Nasiel sa viacznakovy delim: :[]
-prepol som sa
-param1: 0
+[NOTICE] Nasiel som dcol.
+param1: 2
 param2: 0
-mode: 11
-aaa:bbb:ccc:oo::
-aaa:bbb:ccc:2x:
-aaa:bbb:ccc:3x:
-aaa:bbb:ccc:oo:
-aaa:bbb:ccc:oo:
-aaa:bbb:ccc:oo:
-aaa:bbb:ccc:oo:
-aaa:bbb:ccc:oo:
+aaa:ccc:oo:
+aaa:ccc:2x
+aaa:ccc:3x
+aaa:ccc:oo
+aaa:ccc:oo
+aaa:ccc:oo
+aaa:ccc:oo
+aaa:ccc:oo
 [NOTICE] Argumenty vykonane.
