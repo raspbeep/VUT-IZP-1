@@ -277,6 +277,38 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
 
 }
 
+
+
+// POMOCNE FUNKCIE
+
+int verify_digits_only_in_string(const char string[]){
+    // overenie ci su v argumente v argv[] iba cisla a ziadne ine znaky
+    // ak je vsetko v poriadku a je to iba int, vrati 0. inak vrati 1
+
+    for (int position_in_string = 0; string[position_in_string] != '\0'; position_in_string++){
+        if(!isdigit((char)string[position_in_string])){
+            printf("[ERROR] Nespravne argumenty (objavil sa necislovy znak.)\n");
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int verify_unsigned_integer(const char string[]){
+    // zisti ci je na prvom mieste v parametri -
+    // ak ano, tak vrati 1, inak 0
+
+    if (string[0] == '-'){
+        printf("[ERROR] Nespravne argumenty (objavilo sa negativne cislo)\n");
+        return 1;
+    }else{
+        return 0;
+    }
+
+}
+
+// FUNKCIE NA DELIM
+
 void find_delim (int argc, char **argv, char *delim, bool *found_delim, char delim_string[]){
 
     DelimMode arg_mode = SCAN_DELIM;
@@ -318,34 +350,6 @@ void find_delim (int argc, char **argv, char *delim, bool *found_delim, char del
             }
         }
     }
-}
-
-// POMOCNE FUNKCIE
-
-int verify_digits_only_in_string(const char string[]){
-    // overenie ci su v argumente v argv[] iba cisla a ziadne ine znaky
-    // ak je vsetko v poriadku a je to iba int, vrati 0. inak vrati 1
-
-    for (int position_in_string = 0; string[position_in_string] != '\0'; position_in_string++){
-        if(!isdigit((char)string[position_in_string])){
-            printf("[ERROR] Nespravne argumenty (objavil sa necislovy znak.)\n");
-            return 1;
-        }
-    }
-    return 0;
-}
-
-int verify_unsigned_integer(const char string[]){
-    // zisti ci je na prvom mieste v parametri -
-    // ak ano, tak vrati 1, inak 0
-
-    if (string[0] == '-'){
-        printf("[ERROR] Nespravne argumenty (objavilo sa negativne cislo)\n");
-        return 1;
-    }else{
-        return 0;
-    }
-
 }
 
 int is_delim (const char *delim, char *delim_string[], const bool *multi_character_delim, int znak) {
@@ -554,14 +558,12 @@ void dcol(FILE *file_in, FILE *file_out, int param, const char *delim, char deli
                 }
 
             }else {
-                //printf("*");
                 if (!pass) fputc(znak, file_out);
 
             }
             znak = fgetc(file_in);
 
         }
-
 
         if (znak == '\n') {
             pass = false;
