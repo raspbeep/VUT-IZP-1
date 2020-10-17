@@ -1,8 +1,8 @@
-aaa[:bbb[ccc[oo
-aaa[:bbb:ccc[oo
-aaa:bbb]ccc[oo
+aaa[bbb[ccc[oo:
+aaa:bbb:ccc[2x
+aaa:bbb]ccc[3x
 aaa[bbb:ccc[oo
 aaa:bbb[ccc[oo
 aaa[bbb:ccc[oo
-aaa[:bbb:ccc[oo
+aaa:bbb:ccc[oo
 aaa:bbb]ccc[oo
