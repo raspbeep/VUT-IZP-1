@@ -1,8 +1,17 @@
 [START]
 [NOTICE] Nasiel sa viacznakovy delim: :[]
-[NOTICE] Nasiel som cset.
-param1: 0
+[NOTICE] Nasiel som upper.
+param1: 3
 param2: 0
-strprm: lmaoo
-lmaoo[NOTICE] Argumenty vykonane.
+strprm: 
+1aa:bBb:3:oo:abcd
+2aa:bbb:0:oo:abcd
+3aa:bbb:Ccc:oo:abcd
+4aa:bbb:cCc:oo:abcd
+5aa:bbb:ccC:oo:abcd
+6aa:bbb:ccc:oo:abcd
+7aa:bbb:0:0o:abcD
+8aa:bbb:ccc:oo:abcd
+1aa:bbb:cXc:oo:Abcd
+[NOTICE] Argumenty vykonane.
 [EXIT]

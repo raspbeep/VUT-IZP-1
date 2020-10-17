@@ -3,25 +3,26 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#define MAX_CELL_SIZE 101
 
-/*
-CHYBOVE HLASENIA
- 2 nedostal som ziadne argumenty na vstupe
- */
 
 typedef enum {SCAN_DELIM_AND_ARGS, RUN, EXIT} RunMode;
 
 typedef enum {SCAN_DELIM, AWAIT_DELIM, DONE} DelimMode;
 
-typedef enum {SCAN_PARAMS, AWAIT_IROW_PARAM, AWAIT_DROW_PARAM, AWAIT_DROWS_PARAMS_1, AWAIT_DROWS_PARAMS_2, AWAIT_ICOL_PARAM, AWAIT_DCOL_PARAM, AWAIT_DCOLS_PARAMS_1, AWAIT_DCOLS_PARAMS_2, AWAIT_CSET_PARAM, PARAM_ERROR, HAVE_ALL_PARAMS} ParamMode;
+typedef enum {SCAN_PARAMS, AWAIT_IROW_PARAM, AWAIT_DROW_PARAM, AWAIT_DROWS_PARAMS_1, AWAIT_DROWS_PARAMS_2,
+              AWAIT_ICOL_PARAM, AWAIT_DCOL_PARAM, AWAIT_DCOLS_PARAMS_1, AWAIT_DCOLS_PARAMS_2, AWAIT_CSET_PARAMS_1,
+              AWAIT_CSET_PARAMS_2, AWAIT_TOLOWER_PARAM, AWAIT_TOUPPER_PARAM, AWAIT_ROUND_PARAM, PARAM_ERROR, HAVE_ALL_PARAMS} ParamMode;
 
-typedef enum {NONE, IROW, AROW, DROW, DROWS, ICOL, ACOL, DCOL, DCOLS, CSET} ArgsMode;
+typedef enum {NONE, IROW, AROW, DROW, DROWS, ICOL, ACOL, DCOL, DCOLS, CSET,
+              TOLOWER, TOUPPER, ROUND} ArgsMode;
 
 
 void find_delim(int argc, char **argv, char *delim, bool *found_delim, char delim_string[]);
 void process_args (int argc, char **argv, const bool *found_delim, int *param1, int *param2, char *string_param, ArgsMode *args_mode, ParamMode *param_mode);
 int verify_digits_only_in_string(const char string[]);
 int verify_unsigned_integer(const char string[]);
+
 void print_string_to_stdout(FILE *file_out, const char string_param[]);
 void irow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 int is_delim (const char *delim, char *delim_string[], const bool *multi_character_delim, int znak);
@@ -34,10 +35,15 @@ void acol(FILE *file_in, FILE *file_out, int param, const char *delim, char deli
 void dcol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 void dcols(FILE *file_in, FILE *file_out, int param1, int param2, const char *delim, char delim_string[], bool multi_character_string);
 void drows(FILE *file_in, FILE *file_out, int param1, int param2, const char *delim, char delim_string[], bool multi_character_string);
+void tolowerfunc(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
+void toupperfunc(FILE *file_in, FILE *file_out, int param1, const char *delim, char delim_string[], bool multi_character_string);
+void roundfunc(FILE *file_in, FILE *file_out, int param1, const char *delim, char delim_string[], bool multi_character_string);
 
 // PROTOTYPY FUNKCII NA SPRACOVANIE DAT
 
-void cset(FILE *file_in, FILE *file_out, char string_param[], const char *delim, char delim_string[], bool multi_character_string);
+void cset(FILE *file_in, FILE *file_out, int param1, char string_param[], const char *delim, char delim_string[], bool multi_character_string);
+
+// MAIN
 
 int main(int argc, char *argv[]){
     // neboli zadane ziadne args ani delim
@@ -133,7 +139,19 @@ int main(int argc, char *argv[]){
                         break;
 
                     case CSET:
-                        cset(file_in, file_out, string_param, &delim, delim_string, multi_character_delim);
+                        cset(file_in, file_out, param1, string_param, &delim, delim_string, multi_character_delim);
+                        break;
+
+                    case TOLOWER:
+                        tolowerfunc(file_in, file_out, param1, &delim, delim_string, multi_character_delim);
+                        break;
+
+                    case TOUPPER:
+                        toupperfunc(file_in, file_out, param1, &delim, delim_string, multi_character_delim);
+                        break;
+
+                    case ROUND:
+                        roundfunc(file_in, file_out, param1, &delim, delim_string, multi_character_delim);
                         break;
 
                     case NONE:
@@ -197,10 +215,22 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
                 } else if (!strcmp(argv[i], "dcols")) {
                     printf("[NOTICE] Nasiel som dcols.\n");
                     *param_mode = AWAIT_DCOLS_PARAMS_1;
+
                 } else if (!strcmp(argv[i], "cset")) {
                     printf("[NOTICE] Nasiel som cset.\n");
-                    *param_mode = AWAIT_CSET_PARAM;
-                }else {
+                    *param_mode = AWAIT_CSET_PARAMS_1;
+
+                }else if (!strcmp(argv[i], "tolower")) {
+                    printf("[NOTICE] Nasiel som tolower.\n");
+                    *param_mode = AWAIT_TOLOWER_PARAM;
+
+                } else if (!strcmp(argv[i], "toupper")) {
+                    printf("[NOTICE] Nasiel som upper.\n");
+                    *param_mode = AWAIT_TOUPPER_PARAM;
+                } else if (!strcmp(argv[i], "round")) {
+                    printf("[NOTICE] Nasiel som upper.\n");
+                    *param_mode = AWAIT_ROUND_PARAM;
+                } else {
                     *param_mode = PARAM_ERROR;
                     printf("[ERROR] Tento argument nepoznam.\n");
                 }
@@ -335,7 +365,21 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
                     break;
                 }
 
-            case AWAIT_CSET_PARAM:
+            case AWAIT_CSET_PARAMS_1:
+                if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
+                    break;
+                }else if ((*param1 = (int)strtol(argv[i], NULL, 10)), param1 != 0){
+
+                    *args_mode = CSET;
+                    *param_mode = AWAIT_CSET_PARAMS_2;
+                    break;
+                }else{
+                    *param_mode = PARAM_ERROR;
+                    printf("[ERROR] Parameter musi byt vacsi ako nula.\n");
+                    break;
+                }
+
+            case AWAIT_CSET_PARAMS_2:
 
                 for (unsigned long int position_in_string = 0, size_of_string_param = strlen(argv[i]); position_in_string < size_of_string_param; position_in_string++){
                     string_param[position_in_string] = (char)argv[i][position_in_string];
@@ -345,6 +389,47 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
                 *param_mode = HAVE_ALL_PARAMS;
                 break;
 
+            case AWAIT_TOLOWER_PARAM:
+                if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
+                    break;
+                }else if ((*param1 = (int)strtol(argv[i], NULL, 10)), param1 != 0){
+
+                    *args_mode = TOLOWER;
+                    *param_mode = HAVE_ALL_PARAMS;
+                    break;
+                }else{
+                    *param_mode = PARAM_ERROR;
+                    printf("[ERROR] Parameter musi byt vacsi ako nula.\n");
+                    break;
+                }
+
+            case AWAIT_TOUPPER_PARAM:
+                if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
+                    break;
+                }else if ((*param1 = (int)strtol(argv[i], NULL, 10)), param1 != 0){
+
+                    *args_mode = TOUPPER;
+                    *param_mode = HAVE_ALL_PARAMS;
+                    break;
+                }else{
+                    *param_mode = PARAM_ERROR;
+                    printf("[ERROR] Parameter musi byt vacsi ako nula.\n");
+                    break;
+                }
+
+            case AWAIT_ROUND_PARAM:
+                if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
+                    break;
+                }else if ((*param1 = (int)strtol(argv[i], NULL, 10)), param1 != 0){
+
+                    *args_mode = ROUND;
+                    *param_mode = HAVE_ALL_PARAMS;
+                    break;
+                }else{
+                    *param_mode = PARAM_ERROR;
+                    printf("[ERROR] Parameter musi byt vacsi ako nula.\n");
+                    break;
+                }
 
             case PARAM_ERROR:
                 printf("[ERROR] Parameter error, pozri chybove hlasky.\n");
@@ -356,8 +441,6 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
     }
 
 }
-
-
 
 // POMOCNE FUNKCIE
 
@@ -389,9 +472,19 @@ int verify_unsigned_integer(const char string[]){
 
 void print_string_to_stdout(FILE *file_out, const char string_param[]) {
     int i = 0;
+    int znak = 0;
     while (string_param[i] != '\0') {
         fputc(string_param[i], file_out);
         i++;
+    }
+
+}
+
+void skip_to_next_delim(FILE *file_in, FILE *file_out, const char *delim, char *delim_string[], const bool *multi_character_delim) {
+    int znak = 0;
+    while (!is_delim(delim, delim_string, multi_character_delim, znak)){
+        printf("*");
+        znak = fgetc(file_in);
     }
 }
 
@@ -441,8 +534,9 @@ void find_delim (int argc, char **argv, char *delim, bool *found_delim, char del
 }
 
 int is_delim (const char *delim, char *delim_string[], const bool *multi_character_delim, int znak) {
-    // porovna ci sa znak nachadza v retazci delim
-    // ak je znak delim, vrati 1, inak 0
+    /* porovna ci sa znak nachadza v retazci delim
+       ak je znak delim, vrati 1, inak 0
+    */
 
     if (*multi_character_delim) {
         if ( strchr(*delim_string, (char)znak) != NULL )
@@ -735,6 +829,176 @@ void drows(FILE *file_in, FILE *file_out, int param1, int param2, const char *de
 
 // FUNKCIE NA SPRACOVANIE DAT
 
-void cset(FILE *file_in, FILE *file_out, char string_param[], const char *delim, char delim_string[], bool multi_character_string) {
+void cset(FILE *file_in, FILE *file_out, int param1, char string_param[], const char *delim, char delim_string[], bool multi_character_string) {
+    int znak = fgetc(file_in);
+    int stlpce_counter = 0;
 
+    while (znak != EOF) {
+        stlpce_counter++;
+
+        while (znak != '\n' && znak != EOF) {
+
+            if (stlpce_counter == param1) {
+                print_string_to_stdout(file_out, string_param);
+                while (!is_delim(delim, &delim_string, &multi_character_string, znak)) znak = fgetc(file_in);
+                fputc(*delim, file_out);
+                znak = fgetc(file_in);
+                stlpce_counter++;
+            } else {
+                if (is_delim(delim, &delim_string, &multi_character_string, znak)) {
+                    stlpce_counter++;
+                    fputc(*delim, file_out);
+                    znak = fgetc(file_in);
+                } else {
+                    fputc(znak, file_out);
+                    znak = fgetc(file_in);
+                }
+            }
+        }
+
+        if (znak == '\n') {
+            fputc('\n', file_out);
+            znak = fgetc(file_in);
+            stlpce_counter = 0;
+        }
+
+    }
+    fputc('\n', file_out);
+}
+
+void tolowerfunc(FILE *file_in, FILE *file_out, int param1, const char *delim, char delim_string[], bool multi_character_string) {
+    int znak = fgetc(file_in);
+    int stlpce_counter = 0;
+
+    while (znak != EOF) {
+        stlpce_counter++;
+
+        while (znak != '\n' && znak != EOF) {
+
+            if (stlpce_counter == param1 && !is_delim(delim, &delim_string, &multi_character_string,znak) ) {
+
+                if (znak >= 65 && znak <= 90){
+                    fputc(znak + 32, file_out);
+                }else {
+                    fputc(znak, file_out);
+                }
+                znak = fgetc(file_in);
+            } else {
+                if (is_delim(delim, &delim_string, &multi_character_string, znak)) {
+                    stlpce_counter++;
+                    fputc(*delim, file_out);
+                    znak = fgetc(file_in);
+                } else {
+                    fputc(znak, file_out);
+                    znak = fgetc(file_in);
+                }
+            }
+        }
+
+        if (znak == '\n') {
+            fputc('\n', file_out);
+            znak = fgetc(file_in);
+            stlpce_counter = 0;
+        }
+    }
+    fputc('\n', file_out);
+}
+
+void toupperfunc(FILE *file_in, FILE *file_out, int param1, const char *delim, char delim_string[], bool multi_character_string) {
+    int znak = fgetc(file_in);
+    int stlpce_counter = 0;
+
+    while (znak != EOF) {
+        stlpce_counter++;
+
+        while (znak != '\n' && znak != EOF) {
+
+            if (stlpce_counter == param1 && !is_delim(delim, &delim_string, &multi_character_string,znak) ) {
+
+                if (znak >= 97 && znak <= 122){
+                    fputc(znak - 32, file_out);
+                }else {
+                    fputc(znak, file_out);
+                }
+                znak = fgetc(file_in);
+            } else {
+                if (is_delim(delim, &delim_string, &multi_character_string, znak)) {
+                    stlpce_counter++;
+                    fputc(*delim, file_out);
+                    znak = fgetc(file_in);
+                } else {
+                    fputc(znak, file_out);
+                    znak = fgetc(file_in);
+                }
+            }
+        }
+
+        if (znak == '\n') {
+            fputc('\n', file_out);
+            znak = fgetc(file_in);
+            stlpce_counter = 0;
+        }
+    }
+    fputc('\n', file_out);
+}
+
+void roundfunc(FILE *file_in, FILE *file_out, int param1, const char *delim, char delim_string[], bool multi_character_string) {
+    // nefunguje, vracia picoviny, nezaokruhluje. Mozno sa to spravit cez printf?
+
+    int znak = fgetc(file_in);
+    int stlpce_counter = 0;
+    int str_to_round_legth = 0;
+    char str_to_round[MAX_CELL_SIZE];
+
+    while (znak != EOF) {
+        stlpce_counter++;
+
+        while (znak != '\n' && znak != EOF) {
+
+            if (stlpce_counter == param1 && !is_delim(delim, &delim_string, &multi_character_string,znak) ) {
+
+                while (!is_delim(delim, &delim_string, &multi_character_string, znak)) {
+
+                    str_to_round[str_to_round_legth] = (char)znak;
+                    str_to_round_legth++;
+                    znak = fgetc(file_in);
+                }
+                if (str_to_round[0] == '0'){
+                    fputc('0', file_out);
+                }else {
+
+                    if ((int) strtof(str_to_round, NULL)) {
+                        printf("%d", (int) strtof(str_to_round, NULL));
+                    } else {
+                        for (int i = 0; i < str_to_round_legth; i++) {
+                            fputc((int) str_to_round[i], file_out);
+                        }
+                    }
+                }
+
+                str_to_round[0] = '\0';
+                str_to_round_legth = 0;
+
+                fputc(*delim, file_out);
+                stlpce_counter++;
+                znak = fgetc(file_in);
+            } else {
+                if (is_delim(delim, &delim_string, &multi_character_string, znak)) {
+                    stlpce_counter++;
+                    fputc(*delim, file_out);
+                    znak = fgetc(file_in);
+                } else {
+                    fputc(znak, file_out);
+                    znak = fgetc(file_in);
+                }
+            }
+        }
+
+        if (znak == '\n') {
+            fputc('\n', file_out);
+            znak = fgetc(file_in);
+            stlpce_counter = 0;
+        }
+    }
+    fputc('\n', file_out);
 }
