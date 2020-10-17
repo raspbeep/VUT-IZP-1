@@ -13,26 +13,37 @@ typedef enum {SCAN_DELIM_AND_ARGS, RUN, EXIT} RunMode;
 
 typedef enum {SCAN_DELIM, AWAIT_DELIM, DONE} DelimMode;
 
-typedef enum {SCAN_PARAMS, AWAIT_IROW_PARAM, AWAIT_DROW_PARAM, AWAIT_DROWS_PARAMS_1, AWAIT_DROWS_PARAMS_2, AWAIT_ICOL_PARAM, AWAIT_ACOL_PARAM, AWAIT_DCOL_PARAM, AWAIT_DCOLS_PARAM_1, AWAIT_DCOL_PARAMS_2, PARAM_ERROR, HAVE_ALL_PARAMS} ParamMode;
+typedef enum {SCAN_PARAMS, AWAIT_IROW_PARAM, AWAIT_DROW_PARAM, AWAIT_DROWS_PARAMS_1, AWAIT_DROWS_PARAMS_2, AWAIT_ICOL_PARAM, AWAIT_DCOL_PARAM, AWAIT_DCOLS_PARAMS_1, AWAIT_DCOLS_PARAMS_2, AWAIT_CSET_PARAM, PARAM_ERROR, HAVE_ALL_PARAMS} ParamMode;
 
-typedef enum {NONE, IROW, AROW, DROW, DROWS, ICOL, ACOL, DCOL, DCOLS} ArgsMode;
+typedef enum {NONE, IROW, AROW, DROW, DROWS, ICOL, ACOL, DCOL, DCOLS, CSET} ArgsMode;
 
 
 void find_delim(int argc, char **argv, char *delim, bool *found_delim, char delim_string[]);
-void process_args (int argc, char **argv, const bool *found_delim, int *param1, int *param2,ArgsMode *args_mode, ParamMode *param_mode);
+void process_args (int argc, char **argv, const bool *found_delim, int *param1, int *param2, char *string_param, ArgsMode *args_mode, ParamMode *param_mode);
 int verify_digits_only_in_string(const char string[]);
 int verify_unsigned_integer(const char string[]);
+void print_string_to_stdout(FILE *file_out, const char string_param[]);
 void irow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 int is_delim (const char *delim, char *delim_string[], const bool *multi_character_delim, int znak);
+
+// PROTOTYPY FUNKCII NA UPRAVU TABULKY
 void arow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 void drow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 void icol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 void acol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 void dcol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
+void dcols(FILE *file_in, FILE *file_out, int param1, int param2, const char *delim, char delim_string[], bool multi_character_string);
+void drows(FILE *file_in, FILE *file_out, int param1, int param2, const char *delim, char delim_string[], bool multi_character_string);
+
+// PROTOTYPY FUNKCII NA SPRACOVANIE DAT
+
+void cset(FILE *file_in, FILE *file_out, char string_param[], const char *delim, char delim_string[], bool multi_character_string);
 
 int main(int argc, char *argv[]){
     // neboli zadane ziadne args ani delim
     if (argc == 1) return 2;
+
+    printf("[START]\n");
 
     // pointer na stdin, stdout IO stream
     FILE *file_in = stdin;
@@ -47,13 +58,17 @@ int main(int argc, char *argv[]){
     RunMode run_mode = SCAN_DELIM_AND_ARGS;
     ParamMode param_mode = SCAN_PARAMS;
     ArgsMode args_mode = NONE;
+
+    // PARAMETRE PRE ARGUMENTY
     int param1 = 0;
     int param2 = 0;
+    char string_param[101];
 
     while (run_mode != EXIT) {
         switch (run_mode) {
             case SCAN_DELIM_AND_ARGS:
                 find_delim(argc, argv, &delim, &found_delim, delim_string);
+
                 if (found_delim) {
                     if(strlen(delim_string) != 0){
                         delim = delim_string[0];
@@ -67,15 +82,17 @@ int main(int argc, char *argv[]){
                     delim = ' ';
                 }
 
-                process_args(argc, argv, &found_delim, &param1, &param2, &args_mode, &param_mode);
+                process_args(argc, argv, &found_delim, &param1, &param2, string_param, &args_mode, &param_mode);
 
                 if (param_mode == HAVE_ALL_PARAMS) {
                     printf("param1: %d\n", param1);
                     printf("param2: %d\n", param2);
+                    printf("strprm: %s\n", string_param);
+
                     run_mode = RUN;
                 }
                 if (param_mode == PARAM_ERROR) {
-                    printf("[ERROR] Param error.\n");
+                    printf("[ERROR] Parameter error.\n");
                     run_mode = EXIT;
                 }
                 break;
@@ -107,6 +124,18 @@ int main(int argc, char *argv[]){
                         dcol(file_in, file_out, param1, &delim, delim_string, multi_character_delim);
                         break;
 
+                    case DCOLS:
+                        dcols(file_in, file_out, param1, param2, &delim, delim_string, multi_character_delim);
+                        break;
+
+                    case DROWS:
+                        drows(file_in, file_out, param1, param2, &delim, delim_string, multi_character_delim);
+                        break;
+
+                    case CSET:
+                        cset(file_in, file_out, string_param, &delim, delim_string, multi_character_delim);
+                        break;
+
                     case NONE:
                         printf("[ERROR] Neboli najdene ziadne argumenty na upravu tabulky.\n");
                         break;
@@ -123,9 +152,11 @@ int main(int argc, char *argv[]){
         }
     }
 
+
+    printf("[EXIT]");
 }
 
-void process_args (int argc, char **argv, const bool *found_delim,int *param1,int *param2, ArgsMode *args_mode, ParamMode *param_mode){
+void process_args (int argc, char **argv, const bool *found_delim,int *param1,int *param2, char *string_param, ArgsMode *args_mode, ParamMode *param_mode){
     // roztriedi argumenty, zaradi RunMode
 
     // ak uz ma delim tak je arg na 3 pozicii, inak je na prvej
@@ -137,35 +168,43 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
             case SCAN_PARAMS:
                 if (!strcmp(argv[i], "irow")) {
                     printf("[NOTICE] Nasiel som irow\n");
-                    *args_mode = IROW;
                     *param_mode = AWAIT_IROW_PARAM;
 
-                }else if (!strcmp(argv[i], "arow")){
+                } else if (!strcmp(argv[i], "arow")){
                     printf("[NOTICE] Nasiel som arow.\n");
-                    *args_mode = AROW;
                     *param_mode = HAVE_ALL_PARAMS;
 
-                }else if (!strcmp(argv[i], "drow")){
+                } else if (!strcmp(argv[i], "drow")){
                     printf("[NOTICE] Nasiel som drow.\n");
-                    *args_mode = DROW;
                     *param_mode = AWAIT_DROW_PARAM;
 
-                }else if (!strcmp(argv[i], "drows")){
+                } else if (!strcmp(argv[i], "drows")){
                     printf("[NOTICE] Nasiel som drows.\n");
                     *param_mode = AWAIT_DROWS_PARAMS_1;
 
-                }else if (!strcmp(argv[i], "icol")){
+                } else if (!strcmp(argv[i], "icol")){
                     printf("[NOTICE] Nasiel icol.\n");
                     *param_mode = AWAIT_ICOL_PARAM;
 
-                }else if (!strcmp(argv[i], "acol")){
+                } else if (!strcmp(argv[i], "acol")){
                     printf("[NOTICE] Nasiel som acol.\n");
-                    *param_mode = AWAIT_ACOL_PARAM;
+                    *param_mode = HAVE_ALL_PARAMS;
 
-                }else if (!strcmp(argv[i], "dcol")){
+                } else if (!strcmp(argv[i], "dcol")){
                     printf("[NOTICE] Nasiel som dcol.\n");
                     *param_mode = AWAIT_DCOL_PARAM;
+
+                } else if (!strcmp(argv[i], "dcols")) {
+                    printf("[NOTICE] Nasiel som dcols.\n");
+                    *param_mode = AWAIT_DCOLS_PARAMS_1;
+                } else if (!strcmp(argv[i], "cset")) {
+                    printf("[NOTICE] Nasiel som cset.\n");
+                    *param_mode = AWAIT_CSET_PARAM;
+                }else {
+                    *param_mode = PARAM_ERROR;
+                    printf("[ERROR] Tento argument nepoznam.\n");
                 }
+
                 break;
 
             case AWAIT_IROW_PARAM:
@@ -204,32 +243,32 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
                 if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
                     break;
                 }else if ((*param1 = (int)strtol(argv[i], NULL, 10)), *param1 != 0){
-                        *param_mode = AWAIT_DROWS_PARAMS_2;
-                        break;
+                    *param_mode = AWAIT_DROWS_PARAMS_2;
+
                     }else{
+                        *param_mode = PARAM_ERROR;
                         printf("[ERROR] Parameter musi byt vacsi ako nula.\n");
-                        break;
                     }
+                break;
 
 
             case AWAIT_DROWS_PARAMS_2:
 
                 if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
                     break;
-                }else if ((*param2 = (int)strtol(argv[i], NULL, 10)), *param2 != 0){
-
-                    if (*param1 == *param2){
-                            *args_mode = DROW;
-                        }else{
-                            *args_mode = DROWS;
-                        }
-
+                }else if ((*param2 = (int)strtol(argv[i], NULL, 10)), *param2 != 0) {
+                    if (*param1 == *param2) {
+                        *args_mode = DROW;
                         *param_mode = HAVE_ALL_PARAMS;
-                        break;
-                    }else{
-                        printf("[ERROR] Parameter musi byt vacsi ako nula.\n");
-                        break;
+                    } else if (*param1 > *param2) {
+                        *param_mode = PARAM_ERROR;
+                        printf("[ERROR] Parameter 1 musi byt mensi alebo rovny parametru 2.\n");
+                    } else {
+                        *args_mode = DROWS;
+                        *param_mode = HAVE_ALL_PARAMS;
                     }
+                }
+                    break;
 
             case AWAIT_ICOL_PARAM:
                 if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
@@ -241,21 +280,11 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
 
                     // prepnutie modu, moze sa prepnut main mode na execution
                     *param_mode = HAVE_ALL_PARAMS;
-                    break;
-
                 }else{
+                    *param_mode = PARAM_ERROR;
                     printf("[ERROR] Parameter musi byt vacsi ako nula.\n");
-                    break;
                 }
-
-            case AWAIT_ACOL_PARAM:
-                // prepnutie modu na IROW
-                *args_mode = ACOL;
-                printf("prepol som sa\n");
-                // prepnutie modu, moze sa prepnut main mode na execution
-                *param_mode = HAVE_ALL_PARAMS;
-
-                break;
+                    break;
 
             case AWAIT_DCOL_PARAM:
                 if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
@@ -266,9 +295,60 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
                     *param_mode = HAVE_ALL_PARAMS;
                     break;
                 }else{
+                    *param_mode = PARAM_ERROR;
                     printf("[ERROR] Parameter musi byt vacsi ako nula.\n");
                     break;
                 }
+            case AWAIT_DCOLS_PARAMS_1:
+                if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
+                    break;
+                }else if ((*param1 = (int)strtol(argv[i], NULL, 10)), param1 != 0){
+
+                    *args_mode = DCOL;
+                    *param_mode = AWAIT_DCOLS_PARAMS_2;
+                    break;
+                }else{
+                    *param_mode = PARAM_ERROR;
+                    printf("[ERROR] Parameter musi byt vacsi ako nula.\n");
+                    break;
+                }
+
+            case AWAIT_DCOLS_PARAMS_2:
+                if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
+                    break;
+                }else if ((*param2 = (int)strtol(argv[i], NULL, 10)), param1 != 0){
+                    if (*param2 == *param1) {
+                        *args_mode = DCOL;
+                        *param_mode = HAVE_ALL_PARAMS;
+                    } else if (*param1 > *param2) {
+                        *param_mode = PARAM_ERROR;
+                        printf("[ERROR] Parameter 1 musi byt mensi alebo rovny parametru 2.\n");
+                        break;
+                    } else {
+                        *args_mode = DCOLS;
+                        *param_mode = HAVE_ALL_PARAMS;
+                    }
+                    break;
+                }else{
+                    *param_mode = PARAM_ERROR;
+                    printf("[ERROR] Parameter musi byt vacsi ako nula.\n");
+                    break;
+                }
+
+            case AWAIT_CSET_PARAM:
+
+                for (unsigned long int position_in_string = 0, size_of_string_param = strlen(argv[i]); position_in_string < size_of_string_param; position_in_string++){
+                    string_param[position_in_string] = (char)argv[i][position_in_string];
+                }
+
+                *args_mode = CSET;
+                *param_mode = HAVE_ALL_PARAMS;
+                break;
+
+
+            case PARAM_ERROR:
+                printf("[ERROR] Parameter error, pozri chybove hlasky.\n");
+                break;
 
             default:
                 break;
@@ -305,6 +385,14 @@ int verify_unsigned_integer(const char string[]){
         return 0;
     }
 
+}
+
+void print_string_to_stdout(FILE *file_out, const char string_param[]) {
+    int i = 0;
+    while (string_param[i] != '\0') {
+        fputc(string_param[i], file_out);
+        i++;
+    }
 }
 
 // FUNKCIE NA DELIM
@@ -371,7 +459,7 @@ int is_delim (const char *delim, char *delim_string[], const bool *multi_charact
     }
 }
 
-// FUNKCIE
+// FUNKCIE NA UPRAVU TABULKY
 
 void irow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string){
     // vlozi riadok tabulky pred riadok R > 0
@@ -544,6 +632,7 @@ void dcol(FILE *file_in, FILE *file_out, int param, const char *delim, char deli
     bool pass = false;
 
     while (znak != EOF) {
+        if (param == 1) pass = true;
         while (znak != '\n' && znak != EOF) {
 
             if (is_delim(delim, &delim_string, &multi_character_string, znak)){
@@ -573,4 +662,79 @@ void dcol(FILE *file_in, FILE *file_out, int param, const char *delim, char deli
         }
     }
     fputc('\n', file_out);
+}
+
+void dcols(FILE *file_in, FILE *file_out, int param1, int param2, const char *delim, char delim_string[], bool multi_character_string) {
+    // odstrani stlpce N az M (N <= M), ak je N==M tak sa spravi DCOL N
+
+    int znak = fgetc(file_in);
+    int stlpce_counter = 1;
+    bool pass = false;
+
+    while (znak != EOF) {
+        while (znak != '\n' && znak != EOF) {
+
+            if (is_delim(delim, &delim_string, &multi_character_string, znak)){
+                if (!pass) fputc(*delim, file_out);
+                stlpce_counter++;
+
+                if (stlpce_counter >= param1 && stlpce_counter <= param2) {
+                    pass = true;
+                } else {
+                    pass = false;
+                }
+
+            }else {
+                if (!pass) fputc(znak, file_out);
+
+            }
+            znak = fgetc(file_in);
+
+        }
+
+        if (znak == '\n') {
+            pass = false;
+            stlpce_counter = 1;
+            fputc('\n', file_out);
+            znak = fgetc(file_in);
+        }
+    }
+    fputc('\n', file_out);
+}
+
+void drows(FILE *file_in, FILE *file_out, int param1, int param2, const char *delim, char delim_string[], bool multi_character_string) {
+    // odstrani riadky N az M (N <= M), ak je N==M tak sa vykona DROW N
+
+    int riadky_counter = 1;
+    int znak;
+    znak = fgetc(file_in);
+    bool printed_delim = false;
+
+    while (znak != EOF){
+
+        if (riadky_counter >= param1 && riadky_counter <= param2) {
+            if (znak == '\n') riadky_counter++;
+        }else{
+            if (znak == '\n'){
+                riadky_counter++;
+                fputc(znak, file_out);
+            }else{
+
+                if (is_delim(delim, &delim_string, &multi_character_string, znak)){
+                    fputc(*delim, file_out);
+                }else {
+                    fputc(znak, file_out);
+                }
+
+            }
+        }
+        znak = fgetc(file_in);
+    }
+    fputc('\n', file_out);
+}
+
+// FUNKCIE NA SPRACOVANIE DAT
+
+void cset(FILE *file_in, FILE *file_out, char string_param[], const char *delim, char delim_string[], bool multi_character_string) {
+
 }

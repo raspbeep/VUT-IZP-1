@@ -1,13 +1,8 @@
+[START]
 [NOTICE] Nasiel sa viacznakovy delim: :[]
-[NOTICE] Nasiel som dcol.
-param1: 2
+[NOTICE] Nasiel som cset.
+param1: 0
 param2: 0
-aaa:ccc:oo:
-aaa:ccc:2x
-aaa:ccc:3x
-aaa:ccc:oo
-aaa:ccc:oo
-aaa:ccc:oo
-aaa:ccc:oo
-aaa:ccc:oo
-[NOTICE] Argumenty vykonane.
+strprm: lmaoo
+lmaoo[NOTICE] Argumenty vykonane.
+[EXIT]
