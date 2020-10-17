@@ -13,9 +13,9 @@ typedef enum {SCAN_DELIM_AND_ARGS, RUN, EXIT} RunMode;
 
 typedef enum {SCAN_DELIM, AWAIT_DELIM, DONE} DelimMode;
 
-typedef enum {SCAN_PARAMS, AWAIT_IROW_PARAM, AWAIT_AROW_PARAM, AWAIT_DROW_PARAM, AWAIT_DROWS_PARAMS_1, AWAIT_DROWS_PARAMS_2, PARAM_ERROR, HAVE_ALL_PARAMS} ParamMode;
+typedef enum {SCAN_PARAMS, AWAIT_IROW_PARAM, AWAIT_DROW_PARAM, AWAIT_DROWS_PARAMS_1, AWAIT_DROWS_PARAMS_2, AWAIT_ICOL_PARAM, AWAIT_ACOL_PARAM, AWAIT_DCOL_PARAM, AWAIT_DCOLS_PARAM_1, AWAIT_DCOL_PARAMS_2, PARAM_ERROR, HAVE_ALL_PARAMS} ParamMode;
 
-typedef enum {NONE, IROW, AROW, DROW, DROWS} ArgsMode;
+typedef enum {NONE, IROW, AROW, DROW, DROWS, ICOL, ACOL, DCOL, DCOLS} ArgsMode;
 
 
 void find_delim(int argc, char **argv, char *delim, bool *found_delim, char delim_string[]);
@@ -26,6 +26,9 @@ void irow(FILE *file_in, FILE *file_out, int param, const char *delim, char deli
 int is_delim (const char *delim, char *delim_string[], const bool *multi_character_delim, int znak);
 void arow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 void drow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
+void icol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
+void acol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
+void dcol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 
 int main(int argc, char *argv[]){
     // neboli zadane ziadne args ani delim
@@ -71,6 +74,7 @@ int main(int argc, char *argv[]){
                 if (param_mode == HAVE_ALL_PARAMS) {
                     run_mode = RUN;
                 }
+                break;
 
             case RUN:
                 switch (args_mode) {
@@ -85,6 +89,18 @@ int main(int argc, char *argv[]){
 
                     case DROW:
                         drow(file_in, file_out, param1, &delim, delim_string, multi_character_delim);
+                        break;
+
+                    case ACOL:
+                        acol(file_in, file_out, param1, &delim, delim_string, multi_character_delim);
+                        break;
+
+                    case ICOL:
+                        icol(file_in, file_out, param1, &delim, delim_string, multi_character_delim);
+                        break;
+
+                    case DCOL:
+                        dcol(file_in, file_out, param1, &delim, delim_string, multi_character_delim);
                         break;
 
                     case NONE:
@@ -103,7 +119,7 @@ int main(int argc, char *argv[]){
 }
 
 void process_args (int argc, char **argv, const bool *found_delim,int *param1,int *param2, ArgsMode *args_mode, ParamMode *param_mode){
-
+    // roztriedi argumenty, zaradi RunMode
 
     // ak uz ma delim tak je arg na 3 pozicii, inak je na prvej
     int init_position =  (*found_delim ? 3:1);
@@ -120,7 +136,7 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
                 }else if (!strcmp(argv[i], "arow")){
                     printf("nasiel som arow\n");
                     *args_mode = AROW;
-                    *param_mode = AWAIT_AROW_PARAM;
+                    *param_mode = HAVE_ALL_PARAMS;
 
                 }else if (!strcmp(argv[i], "drow")){
                     printf("nasiel som drow\n");
@@ -130,6 +146,16 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
                 }else if (!strcmp(argv[i], "drows")){
                     printf("nasiel som drows\n");
                     *param_mode = AWAIT_DROWS_PARAMS_1;
+
+                }else if (!strcmp(argv[i], "icol")){
+                    printf("nasiel som icol\n");
+                    *param_mode = AWAIT_ICOL_PARAM;
+                }else if (!strcmp(argv[i], "acol")){
+                    printf("nasiel som acol\n");
+                    *param_mode = AWAIT_ACOL_PARAM;
+                }else if (!strcmp(argv[i], "dcol")){
+                    printf("nasiel som dcol\n");
+                    *param_mode = AWAIT_DCOL_PARAM;
                 }
                 break;
 
@@ -149,23 +175,6 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
                     printf("R>0");
                     break;
                 }
-            case AWAIT_AROW_PARAM:
-                if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
-                    break;
-                }else if((*param1 = (int)strtol(argv[i], NULL, 10)),*param1 != 0){ // NOLINT(cert-err34-c)
-
-                    // prepnutie modu na IROW
-                    *args_mode = AROW;
-
-                    // prepnutie modu, moze sa prepnut main mode na execution
-                    *param_mode = HAVE_ALL_PARAMS;
-                    break;
-
-                }else{
-                    printf("R>0");
-                    break;
-                }
-
 
             case AWAIT_DROW_PARAM:
                 if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
@@ -186,7 +195,6 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
                 if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
                     break;
                 }else if ((*param1 = (int)strtol(argv[i], NULL, 10)), *param1 != 0){
-                        *args_mode = DROWS;
                         *param_mode = AWAIT_DROWS_PARAMS_2;
                         break;
                     }else{
@@ -200,12 +208,57 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
                 if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
                     break;
                 }else if ((*param2 = (int)strtol(argv[i], NULL, 10)), *param2 != 0){
+
+                    if (*param1 == *param2){
+                            *args_mode = DROW;
+                        }else{
+                            *args_mode = DROWS;
+                        }
+
                         *param_mode = HAVE_ALL_PARAMS;
                         break;
                     }else{
                         printf("[ERROR] Parameter musi byt vacsi ako nula.\n");
                         break;
                     }
+
+            case AWAIT_ICOL_PARAM:
+                if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
+                    break;
+                }else if((*param1 = (int)strtol(argv[i], NULL, 10)),*param1 != 0){ // NOLINT(cert-err34-c)
+
+                    // prepnutie modu na IROW
+                    *args_mode = ICOL;
+
+                    // prepnutie modu, moze sa prepnut main mode na execution
+                    *param_mode = HAVE_ALL_PARAMS;
+                    break;
+
+                }else{
+                    printf("R>0");
+                    break;
+                }
+
+            case AWAIT_ACOL_PARAM:
+                // prepnutie modu na IROW
+                *args_mode = ACOL;
+
+                // prepnutie modu, moze sa prepnut main mode na execution
+                *param_mode = HAVE_ALL_PARAMS;
+                break;
+
+            case AWAIT_DCOL_PARAM:
+                if (verify_unsigned_integer(argv[i]) || verify_digits_only_in_string(argv[i])){
+                    break;
+                }else if ((*param1 = (int)strtol(argv[i], NULL, 10)), param1 != 0){
+
+                    *args_mode = DCOL;
+                    *param_mode = HAVE_ALL_PARAMS;
+                    break;
+                }else{
+                    printf("[ERROR] Parameter musi byt vacsi ako nula.\n");
+                    break;
+                }
 
             default:
                 break;
@@ -257,6 +310,8 @@ void find_delim (int argc, char **argv, char *delim, bool *found_delim, char del
     }
 }
 
+// POMOCNE FUNKCIE
+
 int verify_digits_only_in_string(const char string[]){
     // overenie ci su v argumente v argv[] iba cisla a ziadne ine znaky
     // ak je vsetko v poriadku a je to iba int, vrati 0. inak vrati 1
@@ -302,7 +357,10 @@ int is_delim (const char *delim, char *delim_string[], const bool *multi_charact
     }
 }
 
+// FUNKCIE
+
 void irow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string){
+    // vlozi riadok tabulky pred riadok R > 0
     int znak;
     int riadky_counter = 0;
     bool printed_delim = false;
@@ -346,7 +404,8 @@ void irow(FILE *file_in, FILE *file_out, int param, const char *delim, char deli
 
 }
 
-void arow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string){
+void icol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string){
+    // vlozi prazdny stlpec pred stlpec C > 0
 
     int znak = 0;
 
@@ -387,6 +446,48 @@ void arow(FILE *file_in, FILE *file_out, int param, const char *delim, char deli
     }
 }
 
+void arow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string) {
+    int znak;
+    int bunky_counter = 0;
+    bool prvy_riadok = true;
+    bool printed_delim = false;
+
+
+    znak = fgetc(file_in);
+    while (znak != EOF) {
+
+        if (znak == '\n' && prvy_riadok){
+            prvy_riadok = false;
+        }
+
+        if (is_delim(delim, &delim_string, &multi_character_string, znak)) {
+
+            if (!printed_delim) {
+                fputc(*delim, file_out);
+                if (prvy_riadok) bunky_counter++;
+                printed_delim = true;
+                znak = fgetc(file_in);
+
+            } else {
+                znak = fgetc(file_in);
+            }
+        } else {
+            printed_delim = false;
+            fputc(znak, file_out);
+            znak = fgetc(file_in);
+        }
+
+
+    }
+    fputc('\n', file_out);
+    for (int i = 0; i<bunky_counter; i++) {
+        fputc(*delim, file_out);
+    }
+
+
+
+}
+
 void drow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string) {
     int riadky_counter = 0;
     int znak;
@@ -425,4 +526,90 @@ void drow(FILE *file_in, FILE *file_out, int param, const char *delim, char deli
             }
         }
     }
+}
+
+void acol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string) {
+    // prida prazdny stlpec za posledny stlpec
+
+    int znak = fgetc(file_in);
+    bool printed_delim = false;
+
+    while (znak != EOF) {
+        while (znak != '\n' && znak != EOF) {
+            if (is_delim(delim, &delim_string, &multi_character_string, znak)){
+                if(!printed_delim) {
+                    fputc(*delim, stdout);
+                    printed_delim = true;
+                    znak = fgetc(file_in);
+                }else{
+                    znak = fgetc(file_in);
+                }
+
+            }else{
+                fputc(znak, stdout);
+                printed_delim = false;
+                znak = fgetc(file_in);
+            }
+        }
+
+        if (znak == '\n') {
+            fputc(*delim, file_out);
+            fputc('\n', file_out);
+            znak = fgetc(file_in);
+        }
+    }
+    fputc(*delim, file_out);
+}
+
+void dcol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string) {
+    // odstrani stlpec cislo C
+
+    int znak = fgetc(file_in);
+    int stlpce_counter = 1;
+    bool printed_delim = false;
+    bool pass = false;
+
+    while (znak != EOF) {
+        while (znak != '\n' && znak != EOF) {
+
+            if (is_delim(delim, &delim_string, &multi_character_string, znak)) {
+                if (!printed_delim) {
+                    fputc(*delim, stdout);
+                    printed_delim = true;
+                    znak = fgetc(file_in);
+                    stlpce_counter++;
+                    if (stlpce_counter == param) {
+                        pass = true;
+                    } else {
+                        pass = false;
+                    }
+
+                } else {
+                    // tu by sa teoreticky malo tiez priratat do stlpce_counter
+                    // problem je ten, ze nevie rozoznat ci je to uz dalsi stlpec
+                    // alebo len dvojity delim :(
+                    znak = fgetc(file_in);
+                }
+
+            } else {
+                if (!pass){
+                    fputc(znak, stdout);
+                    printed_delim = false;
+                    znak = fgetc(file_in);
+                }
+
+            }
+
+        }
+
+
+        if (znak == '\n') {
+            pass = false;
+            printed_delim = true;
+            fputc('\n', file_out);
+            znak = fgetc(file_in);
+        }
+    }
+    fputc(*delim, file_out);
+
 }

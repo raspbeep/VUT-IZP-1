@@ -1,8 +1,8 @@
-aaa[:bbb[ccc
-aaa[:bbb:ccc
-aaa:bbb]ccc
-aaa[bbb:ccc
-aaa:bbb[ccc
-aaa[bbb:ccc
-aaa[bbb:ccc
-aaa:bbb]ccc
+aaa[:bbb[ccc[oo
+aaa[:bbb:ccc[oo
+aaa:bbb]ccc[oo
+aaa[bbb:ccc[oo
+aaa:bbb[ccc[oo
+aaa[bbb:ccc[oo
+aaa[:bbb:ccc[oo
+aaa:bbb]ccc[oo
