@@ -5,14 +5,14 @@
 #include <stdlib.h>
 #define MAX_CELL_SIZE 101
 
-
 typedef enum {SCAN_DELIM_AND_ARGS, RUN, EXIT} RunMode;
 
 typedef enum {SCAN_DELIM, AWAIT_DELIM, DONE} DelimMode;
 
 typedef enum {SCAN_PARAMS, AWAIT_IROW_PARAM, AWAIT_DROW_PARAM, AWAIT_DROWS_PARAMS_1, AWAIT_DROWS_PARAMS_2,
               AWAIT_ICOL_PARAM, AWAIT_DCOL_PARAM, AWAIT_DCOLS_PARAMS_1, AWAIT_DCOLS_PARAMS_2, AWAIT_CSET_PARAMS_1,
-              AWAIT_CSET_PARAMS_2, AWAIT_TOLOWER_PARAM, AWAIT_TOUPPER_PARAM, AWAIT_ROUND_PARAM, PARAM_ERROR, HAVE_ALL_PARAMS} ParamMode;
+              AWAIT_CSET_PARAMS_2, AWAIT_TOLOWER_PARAM, AWAIT_TOUPPER_PARAM, AWAIT_ROUND_PARAM, PARAM_ERROR,
+              HAVE_ALL_PARAMS} ParamMode;
 
 typedef enum {NONE, IROW, AROW, DROW, DROWS, ICOL, ACOL, DCOL, DCOLS, CSET,
               TOLOWER, TOUPPER, ROUND} ArgsMode;
@@ -24,24 +24,27 @@ int verify_digits_only_in_string(const char string[]);
 int verify_unsigned_integer(const char string[]);
 
 void print_string_to_stdout(FILE *file_out, const char string_param[]);
-void irow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
+
 int is_delim (const char *delim, char *delim_string[], const bool *multi_character_delim, int znak);
 
 // PROTOTYPY FUNKCII NA UPRAVU TABULKY
+void irow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 void arow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 void drow(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
+void drows(FILE *file_in, FILE *file_out, int param1, int param2, const char *delim, char delim_string[], bool multi_character_string);
 void icol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 void acol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 void dcol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 void dcols(FILE *file_in, FILE *file_out, int param1, int param2, const char *delim, char delim_string[], bool multi_character_string);
-void drows(FILE *file_in, FILE *file_out, int param1, int param2, const char *delim, char delim_string[], bool multi_character_string);
-void tolowerfunc(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
-void toupperfunc(FILE *file_in, FILE *file_out, int param1, const char *delim, char delim_string[], bool multi_character_string);
-void roundfunc(FILE *file_in, FILE *file_out, int param1, const char *delim, char delim_string[], bool multi_character_string);
+
+
 
 // PROTOTYPY FUNKCII NA SPRACOVANIE DAT
 
 void cset(FILE *file_in, FILE *file_out, int param1, char string_param[], const char *delim, char delim_string[], bool multi_character_string);
+void tolowerfunc(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
+void toupperfunc(FILE *file_in, FILE *file_out, int param1, const char *delim, char delim_string[], bool multi_character_string);
+void roundfunc(FILE *file_in, FILE *file_out, int param1, const char *delim, char delim_string[], bool multi_character_string);
 
 // MAIN
 
@@ -119,6 +122,7 @@ int main(int argc, char *argv[]){
                         break;
 
                     case ACOL:
+                        printf("lmao\n");
                         acol(file_in, file_out, param1, &delim, delim_string, multi_character_delim);
                         break;
 
@@ -206,6 +210,7 @@ void process_args (int argc, char **argv, const bool *found_delim,int *param1,in
 
                 } else if (!strcmp(argv[i], "acol")){
                     printf("[NOTICE] Nasiel som acol.\n");
+                    *args_mode = ACOL;
                     *param_mode = HAVE_ALL_PARAMS;
 
                 } else if (!strcmp(argv[i], "dcol")){

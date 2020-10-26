@@ -4,14 +4,14 @@
 param1: 3
 param2: 0
 strprm: 
-1aa:bBb:3:oo:abcd
-2aa:bbb:0:oo:abcd
-3aa:bbb:Ccc:oo:abcd
-4aa:bbb:cCc:oo:abcd
-5aa:bbb:ccC:oo:abcd
-6aa:bbb:ccc:oo:abcd
-7aa:bbb:0:0o:abcD
-8aa:bbb:ccc:oo:abcd
-1aa:bbb:cXc:oo:Abcd
+1aa:bBb:EMKA:oo:abcd
+2aa:bbb:EMKA:oo:abcd
+3aa:bbb:EMKA:oo:abcd
+4aa:bbb:EMKA:oo:abcd
+5aa:bbb:EMKA:oo:abcd
+6aa:bbb:EMKA:oo:abcd
+7aa:bbb:EMKA:0o:abcD
+8aa:bbb:EMKA:oo:abcd
+1aa:bbb:EMKA:oo:Abcd
 [NOTICE] Argumenty vykonane.
 [EXIT]
