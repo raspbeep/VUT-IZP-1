@@ -72,6 +72,7 @@ int main(int argc, char *argv[]){
     int param1 = 0;
     int param2 = 0;
     char string_param[101];
+    int x;
 
     while (run_mode != EXIT) {
         switch (run_mode) {
@@ -122,7 +123,6 @@ int main(int argc, char *argv[]){
                         break;
 
                     case ACOL:
-                        printf("lmao\n");
                         acol(file_in, file_out, param1, &delim, delim_string, multi_character_delim);
                         break;
 
