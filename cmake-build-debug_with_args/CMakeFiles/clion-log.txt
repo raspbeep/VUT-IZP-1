@@ -1,4 +1,0 @@
-/home/pavel/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/202.7319.72/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" "/home/pavel/Desktop/IZP/demo strcmp"
--- Configuring done
--- Generating done
--- Build files have been written to: /home/pavel/Desktop/IZP/demo strcmp/cmake-build-debug_with_args
