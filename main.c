@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #define MAX_CELL_SIZE 101
 
+
 typedef enum {SCAN_DELIM_AND_ARGS, RUN, EXIT} RunMode;
 
 typedef enum {SCAN_DELIM, AWAIT_DELIM, DONE} DelimMode;
@@ -36,7 +37,6 @@ void icol(FILE *file_in, FILE *file_out, int param, const char *delim, char deli
 void acol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 void dcol(FILE *file_in, FILE *file_out, int param, const char *delim, char delim_string[], bool multi_character_string);
 void dcols(FILE *file_in, FILE *file_out, int param1, int param2, const char *delim, char delim_string[], bool multi_character_string);
-
 
 
 // PROTOTYPY FUNKCII NA SPRACOVANIE DAT
